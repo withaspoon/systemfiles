@@ -1,9 +1,39 @@
-export PATH="~/bin:~/Documents/tools/rebar:/usr/local/mysql/bin:/opt/local/bin:/opt/local/sbin:/my/local/bin:/usr/local/bin:/my/scala-2.7.5.final/bin:/opt/local/var/luarocks/bin:$PATH"
-export PATH=/opt/local/bin:/opt/local/sbin:$PATH
-export PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:${PATH}"
+##
+## COMMANDS
+##
+refresh () { source ~/.bash_profile; }
+pidof () { ps -Ac | egrep -i $@ | awk '{print $1}'; }
 
+##
+## PATHS
+##
+function add_path {
+  local dir=$1
+  if [ -d $dir ]; then
+    PATH="$dir:${PATH}"
+  fi
+}
+
+add_path ~/bin
+add_path ~/Documents/tools/rebar
+add_path /usr/local/mysql/bin
+add_path /opt/local/bin
+add_path /opt/local/sbin
+add_path /my/local/bin
+add_path /usr/local/bin
+add_path /my/scala-2.7.5.final/bin
+add_path /opt/local/var/luarocks/bin
+add_path /Library/Frameworks/Python.framework/Versions/2.7/bin
+
+##
+## HISTORY
+##
 export HISTCONTROL=ignoredups
 export HISTFILESIZE=3000
+
+##
+## PROMPT
+##
 
 function parse_git_branch {
   ref=$(git symbolic-ref HEAD 2> /dev/null) || return
@@ -17,8 +47,9 @@ WHITE="\[\033[0;37m\]"
 
 PS1="$RED\$(date +%H:%M) \w$YELLOW \$(parse_git_branch)$WHITE\$ "
 
-pidof () { ps -Ac | egrep -i $@ | awk '{print $1}'; }
-
+##
+## ALIASES
+##
 if [ "$OS" = "darwin" ] ; then
   alias v=mvim
   alias vc=vim
@@ -27,3 +58,36 @@ else
   alias v=vim
 fi
 
+##
+## SSH
+##
+SSH_ENV="$HOME/.ssh/environment"
+
+function start_agent {
+  echo "Initialising new SSH agent..."
+  /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+  chmod 600 "${SSH_ENV}"
+  . "${SSH_ENV}" > /dev/null
+  /usr/bin/ssh-add
+}
+
+if [ -f "${SSH_ENV}" ]; then
+  . "${SSH_ENV}" > /dev/null
+  ps ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+    start_agent;
+  }
+else
+  start_agent;
+fi
+
+##
+## RVM
+##
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+##
+## COMPLETION
+##
+if [ -f /opt/local/etc/bash_completion ]; then
+  . /opt/local/etc/bash_completion
+fi
